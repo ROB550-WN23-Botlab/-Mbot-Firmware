@@ -196,17 +196,17 @@ bool timer_cb(repeating_timer_t *rt)
         if(rightWheelDistance == leftWheelDistance)
         {
             delta_theta = 0;
-            delta_x = rightWheelDistance * cos(previousTheta);
-            delta_y = rightWheelDistance * sin(previousTheta);
+            delta_x = (rightWheelDistance) * cos(previousTheta);
+            delta_y = (rightWheelDistance) * sin(previousTheta);
         }
 
         else
         {
-            double radiasOfTurn = (WHEEL_RADIUS/2)*((rightWheelDistance-leftWheelDistance)/
-                                                    (rightWheelDistance+leftWheelDistance));
-            delta_theta = (rightWheelDistance-leftWheelDistance)/WHEEL_RADIUS;
-            delta_y = WHEEL_RADIUS*(cos(previousTheta + delta_theta) - cos(previousTheta));
-            delta_x = WHEEL_RADIUS*(sin(previousTheta + delta_theta) - sin(previousTheta));
+            double radiasOfTurn = (WHEEL_BASE/2)*((rightWheelDistance+leftWheelDistance)/
+                                                    (rightWheelDistance-leftWheelDistance));
+            delta_theta = (rightWheelDistance-leftWheelDistance)/(WHEEL_BASE);
+            delta_y = radiasOfTurn*(cos(previousTheta + delta_theta) - cos(previousTheta));
+            delta_x = radiasOfTurn*(sin(previousTheta + delta_theta) - sin(previousTheta));
         }
 
         current_odom.x=current_odom.x + delta_x;
@@ -428,7 +428,7 @@ int main()
 
     while (running)
     {
-        printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_ENC  |  R_ENC  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7lld  |%7lld  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", current_encoders.leftticks, current_encoders.rightticks, current_odom.x, current_odom.y, current_odom.theta*180/PI, current_cmd.trans_v, current_cmd.angular_v);
+        printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_ENC  |  R_ENC  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7lld  |%7lld  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", current_encoders.leftticks, current_encoders.rightticks, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
     }
 }
 
