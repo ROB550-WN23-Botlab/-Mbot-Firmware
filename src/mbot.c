@@ -179,11 +179,53 @@ bool timer_cb(repeating_timer_t *rt)
          *      - Use the equations provided in the document to compute the odometry components
          *      - Remember to clamp the orientation between [0, 2pi]!
          *************************************************************/
-        float delta_d, delta_theta; // displacement in meters and rotation in radians
+        float delta_theta; // displacement in meters and rotation in radians
+        double delta_x = 0;
+        double delta_y = 0;
 
         /*************************************************************
          * End of TODO
          *************************************************************/
+        double rightWheelDistance = current_encoders.right_delta * enc2meters;
+        double leftWheelDistance = current_encoders.left_delta * enc2meters;
+        
+        double previousTheta = current_odom.theta;
+        // double previousX = current_odom.x;
+        // double previousY = current_odom.y; 
+        
+        if(rightWheelDistance == leftWheelDistance)
+        {
+            delta_theta = 0;
+            delta_x = rightWheelDistance * cos(previousTheta);
+            delta_y = rightWheelDistance * sin(previousTheta);
+        }
+
+        else
+        {
+            double radiasOfTurn = (WHEEL_RADIUS/2)*((rightWheelDistance-leftWheelDistance)/
+                                                    (rightWheelDistance+leftWheelDistance));
+            delta_theta = (rightWheelDistance-leftWheelDistance)/WHEEL_RADIUS;
+            delta_y = WHEEL_RADIUS*(cos(previousTheta + delta_theta) - cos(previousTheta));
+            delta_x = WHEEL_RADIUS*(sin(previousTheta + delta_theta) - sin(previousTheta));
+        }
+
+        current_odom.x=current_odom.x + delta_x;
+        current_odom.y=current_odom.y + delta_y;
+        current_odom.theta=current_odom.theta + delta_theta;
+        current_odom.utime = current_encoders.utime;
+
+        while(current_odom.theta >= 2*PI)
+        {
+            current_odom.theta = current_odom.theta - 2*PI;
+        }
+        while(current_odom.theta < 0)
+        {
+            current_odom.theta = current_odom.theta + 2*PI;
+        }
+
+
+
+
 
         // get the current motor command state (if we have one)
         if (comms_get_topic_data(MBOT_MOTOR_COMMAND, &current_cmd))
@@ -386,7 +428,7 @@ int main()
 
     while (running)
     {
-        printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_ENC  |  R_ENC  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7lld  |%7lld  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", current_encoders.leftticks, current_encoders.rightticks, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
+        printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_ENC  |  R_ENC  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7lld  |%7lld  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", current_encoders.leftticks, current_encoders.rightticks, current_odom.x, current_odom.y, current_odom.theta*180/PI, current_cmd.trans_v, current_cmd.angular_v);
     }
 }
 
