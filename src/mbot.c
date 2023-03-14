@@ -105,10 +105,43 @@ void read_pid_coefficients(i2c_inst_t *i2c)
     }
 }
 
-double linearSpeedToDucity(double speed)
+double linearSpeedToDuty(double speed,char motor)
 {
-    double ducity = (speed/0.628)/2;
-    return ducity>=1 ? 1:ducity;
+    int duty = 0;
+    if(speed == 0)
+        {return 0;}
+
+    // left motor forward
+    else if(speed > 0 && motor == 'l')
+    {
+        double duty = 0.8935848 * speed + 0.10415794;
+        return duty<1 ? (int)(INT16_MAX*duty): INT16_MAX;
+    }
+
+    // left motor backward
+    else if(speed < 0 && motor == 'l')
+    {
+        double duty = 0.9203841 * speed - 0.10476584;
+        return duty<1 ? (int)(INT16_MAX*duty): INT16_MIN;
+    }
+
+    // right motor forward
+    else if(speed > 0 && motor == 'r')
+    {
+        double duty = 0.92308803 * speed + 0.11279647;
+        return duty<1 ? (int)(INT16_MAX*duty): INT16_MAX;
+    }
+
+    else if(speed < 0 && motor == 'r')
+    {
+        double duty = 0.92817986 * speed - 0.10170667;
+        return duty<1 ? (int)(INT16_MAX*duty): INT16_MIN;
+    }
+
+    else
+    {
+        printf("error in speed to duty");
+    }
 }
 
 bool timer_cb(repeating_timer_t *rt)
@@ -259,8 +292,10 @@ bool timer_cb(repeating_timer_t *rt)
                 left_sp = linearV - 0.5*angularV*WHEEL_BASE;
                 right_sp = linearV + 0.5*angularV*WHEEL_BASE;
 
-                l_duty = linearSpeedToDucity(left_sp);
-                r_duty = linearSpeedToDucity(right_sp);
+                printf("%f,%f \n",left_sp,right_sp);
+
+                l_duty = linearSpeedToDuty(left_sp,'l');
+                r_duty = linearSpeedToDuty(right_sp,'r');
 
                 printf("%f,%f \n",l_duty,r_duty);
 
