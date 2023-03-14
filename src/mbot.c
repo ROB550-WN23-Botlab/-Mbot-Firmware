@@ -107,7 +107,7 @@ void read_pid_coefficients(i2c_inst_t *i2c)
 
 double linearSpeedToDucity(double speed)
 {
-    double ducity = (speed/0.628)/5;
+    double ducity = (speed/0.628)/2;
     return ducity>=1 ? 1:ducity;
 }
 
