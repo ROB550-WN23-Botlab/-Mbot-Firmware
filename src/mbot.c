@@ -105,6 +105,12 @@ void read_pid_coefficients(i2c_inst_t *i2c)
     }
 }
 
+double linearSpeedToDucity(double speed)
+{
+    double ducity = (speed/0.628)/5;
+    return ducity>=1 ? 1:ducity;
+}
+
 bool timer_cb(repeating_timer_t *rt)
 {
     // Read the PID values
@@ -244,6 +250,28 @@ bool timer_cb(repeating_timer_t *rt)
                  *      - Determine the setpoint velocities for left and right motor using the wheel velocity model
                  *      - To compute the measured velocities, use dt as the timestep (∆t)
                  ************************************************************/
+
+                
+
+                double angularV = current_cmd.angular_v;
+                double linearV = current_cmd.trans_v;
+                
+                left_sp = linearV - 0.5*angularV*WHEEL_BASE;
+                right_sp = linearV + 0.5*angularV*WHEEL_BASE;
+
+                l_duty = linearSpeedToDucity(left_sp);
+                r_duty = linearSpeedToDucity(right_sp);
+
+                printf("%f,%f \n",l_duty,r_duty);
+
+                rc_motor_set(1, (int) l_duty);
+                rc_motor_set(3, (int) r_duty);
+
+
+
+
+
+
 
                 /*************************************************************
                  * End of TODO
@@ -428,7 +456,7 @@ int main()
 
     while (running)
     {
-        printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_ENC  |  R_ENC  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7lld  |%7lld  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", current_encoders.leftticks, current_encoders.rightticks, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
+        // printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_ENC  |  R_ENC  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7lld  |%7lld  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", current_encoders.leftticks, current_encoders.rightticks, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
     }
 }
 

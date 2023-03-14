@@ -10,6 +10,10 @@
 #define GEAR_RATIO 20.4
 #define TIMESTEP_S 1.5
 #define NUM_POINTS 25
+#define WHEEL_RADIUS 0.04
+#define PI 3.1405926
+
+float enc2meters = ((2.0 * PI * WHEEL_RADIUS) / (GEAR_RATIO * ENCODER_RESOLUTION));
 
 void blink();
 
@@ -52,7 +56,7 @@ int main() {
     for (; d < INT_16_MAX; d += INT_16_MAX/NUM_POINTS) {
         rc_motor_set(3, d);
         encoder_reading = -rc_encoder_read_delta(3);
-        wheel_speed = RPM_conversion_factor * encoder_reading;
+        wheel_speed = enc2meters * encoder_reading;
         current_reading = 0.0;
         for(int i=0; i<10; i++){
             current_reading += I_conversion_factor * adc_read()/10;
