@@ -10,6 +10,8 @@
 #define GEAR_RATIO 20.4
 #define TIMESTEP_S 1.5
 #define NUM_POINTS 25
+#define WHEEL_RADIUS 0.04
+#define WHEEL_BASE 0.15
 
 void blink();
 
@@ -40,7 +42,7 @@ int main() {
         for(int i=0; i<10; i++){
             current_reading += I_conversion_factor * adc_read()/10;
         }
-        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, wheel_speed, current_reading);
+        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, (float)WHEEL_RADIUS*2*3.14159*(float)wheel_speed/60,  (float)d);
         sleep_ms(1000*TIMESTEP_S);
     }
     rc_motor_set(1, 0);
@@ -57,7 +59,7 @@ int main() {
         for(int i=0; i<10; i++){
             current_reading += I_conversion_factor * adc_read()/10;
         }
-        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, wheel_speed, current_reading);
+        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, (float)WHEEL_RADIUS*2*3.14159*(float)wheel_speed/60,  (float)d);
         sleep_ms(1000*TIMESTEP_S);
     }
     
