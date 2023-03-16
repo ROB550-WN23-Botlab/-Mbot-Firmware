@@ -115,27 +115,27 @@ double linearSpeedToDuty(double speed,char motor)
     else if(speed > 0 && motor == 'l')
     {
         double duty = 0.8935848 * speed + 0.10415794;
-        return duty<1 ? (int)(INT16_MAX*duty): INT16_MAX;
+        return duty<=1 ? duty: 1;
     }
 
     // left motor backward
     else if(speed < 0 && motor == 'l')
     {
         double duty = 0.9203841 * speed - 0.10476584;
-        return duty<1 ? (int)(INT16_MAX*duty): INT16_MIN;
+        return duty>=-1 ? duty: -1;
     }
 
     // right motor forward
     else if(speed > 0 && motor == 'r')
     {
         double duty = 0.92308803 * speed + 0.11279647;
-        return duty<1 ? (int)(INT16_MAX*duty): INT16_MAX;
+        return duty<=1 ? duty : 1;
     }
 
     else if(speed < 0 && motor == 'r')
     {
         double duty = 0.92817986 * speed - 0.10170667;
-        return duty<1 ? (int)(INT16_MAX*duty): INT16_MIN;
+        return duty>=-1 ? duty: -1;
     }
 
     else
@@ -274,6 +274,7 @@ bool timer_cb(repeating_timer_t *rt)
             float measured_vel_l, measured_vel_r; // measured velocity in m/s
             float l_duty, r_duty;                 // duty cycle in range [-1, 1]
             float dt = MAIN_LOOP_PERIOD;          // time since last update in seconds
+            uint64_t previousTimeStamp = 0;
             if (OPEN_LOOP)
             {
                 /*************************************************************
@@ -285,22 +286,33 @@ bool timer_cb(repeating_timer_t *rt)
                  ************************************************************/
 
                 
-
                 double angularV = current_cmd.angular_v;
                 double linearV = current_cmd.trans_v;
                 
                 left_sp = linearV - 0.5*angularV*WHEEL_BASE;
                 right_sp = linearV + 0.5*angularV*WHEEL_BASE;
 
-                printf("%f,%f \n",left_sp,right_sp);
-
+                
                 l_duty = linearSpeedToDuty(left_sp,'l');
                 r_duty = linearSpeedToDuty(right_sp,'r');
 
-                printf("%f,%f \n",l_duty,r_duty);
+                
 
-                rc_motor_set(1, (int) l_duty);
-                rc_motor_set(3, (int) r_duty);
+                // rc_motor_set(1, (int) l_duty);
+                // rc_motor_set(3, (int) r_duty);
+
+                if(current_cmd.utime != previousTimeStamp)
+                {
+                    printf("currentTime: %d \n",current_cmd.utime);
+                    printf("left wheel speed:%f, right wheel speed:%f \n",left_sp,right_sp);
+                    printf("lduty:%f, rduty:%f \n\n\n",l_duty,r_duty);
+                }
+                else
+                {
+                    printf("bienimafale\n");
+                }
+
+                previousTimeStamp = current_cmd.utime;
 
 
 
