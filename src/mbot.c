@@ -107,7 +107,6 @@ void read_pid_coefficients(i2c_inst_t *i2c)
 
 double linearSpeedToDuty(double speed,char motor)
 {
-    int duty = 0;
     if(speed == 0)
         {return 0;}
 
@@ -309,7 +308,7 @@ bool timer_cb(repeating_timer_t *rt)
                 }
                 else
                 {
-                    printf("bienimafale\n");
+                    printf("same command, status will not change\n");
                 }
 
                 previousTimeStamp = current_cmd.utime;
@@ -391,7 +390,7 @@ int main()
 {
     bi_decl(bi_program_description("Firmware for the MBot Robot Control Board"));
     
-    set_sys_clock_khz(250000, true); // set master clock to 250MHz (if problematic try 125Mhz)
+    set_sys_clock_khz(125000, true); // set master clock to 250MHz (if problematic try 125Mhz)
     stdio_init_all(); // enable USB serial terminal
     sleep_ms(1500); // quick sleep so we can catch the bootup process in terminal
     printf("\nMBot Booting Up!\n");
