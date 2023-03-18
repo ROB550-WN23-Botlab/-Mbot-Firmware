@@ -30,8 +30,8 @@
 // TODO: Enter the polarity values for your motors and encoders
 #define LEFT_ENC_POL 1
 #define RIGHT_ENC_POL -1
-#define LEFT_MOTOR_POL -1
-#define RIGHT_MOTOR_POL -1
+#define LEFT_MOTOR_POL 1
+#define RIGHT_MOTOR_POL 1
 
 // TODO: Populate with calibration data (recommended to generate these for reverse direction as well)
 #define SLOPE_L 1.0
@@ -40,7 +40,7 @@
 #define INTERCEPT_R -0.0
 
 // TODO: Decide which controller is used, open loop = 1, PID = 0
-#define OPEN_LOOP 1
+#define OPEN_LOOP 0
 
 // data to hold current mpu state (not used)
 static rc_mpu_data_t mpu_data;
@@ -71,23 +71,28 @@ mbot_imu_t current_imu = {0};
 timestamp_t received_time = {0};
 // current odometry state
 odometry_t current_odom = {0};
+
+// previous encoder states
+mbot_encoder_t previous_encoders = {0};
+
 // current encoder states
 mbot_encoder_t current_encoders = {0};
 // current body frame command
 mbot_motor_command_t current_cmd = {0};
 
-/**
- * Example filter and PID parameter initialization
- *
- * rc_filter_t my_filter;
- *
- * pid_parameters_t pid_params = {
- *    .kp = 1.0,
- *    .ki = 0.0,
- *    .kd = 0.0,
- *    .dFilterHz = 25.0
- * };
- */
+
+// Example filter and PID parameter initialization
+ 
+rc_filter_t left_wheel_pid_filter;
+rc_filter_t right_wheel_pid_filter;
+
+pid_parameters_t pid_params = {
+.kp = 1.2,
+.ki = 1.8,
+.kd = 0.0,
+.dFilterHz = 25.0
+ };
+ 
 
 rc_filter_t left_pid;
 rc_filter_t right_pid;
