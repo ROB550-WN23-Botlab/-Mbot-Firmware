@@ -105,7 +105,7 @@ void read_pid_coefficients(i2c_inst_t *i2c)
     }
 }
 
-double linearSpeedToDuty(double speed,char motor)
+double linearSpeedToDuty_yuantao(double speed,char motor)
 {
     if(speed == 0)
         {return 0;}
@@ -142,6 +142,46 @@ double linearSpeedToDuty(double speed,char motor)
         printf("error in speed to duty");
     }
 }
+
+
+double linearSpeedToDuty(double speed,char motor)
+{
+    if(speed == 0)
+        {return 0;}
+
+    // left motor forward
+    else if(speed > 0 && motor == 'l')
+    {
+        double duty = 1.38420797  * speed + 0.10521247;
+        return duty<=1 ? duty: 1;
+    }
+
+    // left motor backward
+    else if(speed < 0 && motor == 'l')
+    {
+        double duty = 1.41440438  * speed - 0.09809853;
+        return duty>=-1 ? duty: -1;
+    }
+
+    // right motor forward
+    else if(speed > 0 && motor == 'r')
+    {
+        double duty = 1.41891136  * speed + 0.13051303;
+        return duty<=1 ? duty : 1;
+    }
+
+    else if(speed < 0 && motor == 'r')
+    {
+        double duty = 1.38766877  * speed -0.13458451;
+        return duty>=-1 ? duty: -1;
+    }
+
+    else
+    {
+        printf("error in speed to duty");
+    }
+}
+
 
 bool timer_cb(repeating_timer_t *rt)
 {
@@ -369,6 +409,10 @@ bool timer_cb(repeating_timer_t *rt)
                 double rWheelTargetVelocity = linearV + 0.5*angularV*WHEEL_BASE;
 
 
+
+                printf("angularV:%f,target left speed:%f,target right speed:%f\n",angularV,lWheelTargetVelocity,rWheelTargetVelocity);
+
+
                 double timeFromLast = (current_encoders.utime - previous_encoders.utime)/1000000.0;
                 double lWheelDistance = enc2meters * (current_encoders.left_delta);
                 double rWheelDistance = enc2meters * (current_encoders.right_delta);
@@ -382,7 +426,7 @@ bool timer_cb(repeating_timer_t *rt)
                 double rWheelVelocityError = rWheelTargetVelocity - rWheelRealVelocity;
 
                 float lWheelPidDeltaVel = rc_filter_march(&left_wheel_pid_filter, lWheelVelocityError);
-                float rWheelPidDeltaVel = rc_filter_march(&right_wheel_pid_filter, lWheelVelocityError);
+                float rWheelPidDeltaVel = rc_filter_march(&right_wheel_pid_filter, rWheelVelocityError);
                 
                 l_duty = linearSpeedToDuty(lWheelPidDeltaVel,'l');
                 r_duty = linearSpeedToDuty(rWheelPidDeltaVel,'r');
@@ -407,6 +451,7 @@ bool timer_cb(repeating_timer_t *rt)
             // duty to motor command
             l_cmd = LEFT_MOTOR_POL * (int)(l_duty * 0.95 * pow(2, 15));
             r_cmd = RIGHT_MOTOR_POL * (int)(r_duty * 0.95 * pow(2, 15));
+
 
             // set left and right motor command
             rc_motor_set(LEFT_MOTOR_CHANNEL, l_cmd);
@@ -558,7 +603,7 @@ int main()
 
         // printf("\033[2A\r| lvelocity:\n\r %f",lWheelRealVelocity);
         
-        printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_Vel  |  R_Vel  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", lWheelRealVelocity, rWheelRealVelocity, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
+        // printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_Vel  |  R_Vel  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", lWheelRealVelocity, rWheelRealVelocity, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
     }
 }
 
