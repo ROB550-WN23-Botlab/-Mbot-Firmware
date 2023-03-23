@@ -20,7 +20,7 @@ sudo chmod +x setup.sh
 
 ### Possible Issue
 If you come across an error that says that you cannot clone `lib/pico-sdk`, follow these steps:
-```
+```bash
 cd lib
 rm -rf pico-sdk
 git clone git clone git@github.com:rob102-staff/pico-sdk.git
@@ -40,6 +40,7 @@ make -j4
 
 Build as follows:
 ```bash
+mkdir build
 cd build
 cmake ..
 make

@@ -6,12 +6,14 @@
 #include <hardware/adc.h>
 
 #define INT_16_MAX 32768
-#define ENCODER_RESOLUTION 48.0
-#define GEAR_RATIO 20.4
+#define ENCODER_RESOLUTION 20
+#define GEAR_RATIO 78
 #define TIMESTEP_S 1.5
 #define NUM_POINTS 25
 #define WHEEL_RADIUS 0.04
-#define WHEEL_BASE 0.15
+#define PI 3.1405926
+
+float enc2meters = ((2.0 * PI * WHEEL_RADIUS) / (GEAR_RATIO * ENCODER_RESOLUTION));
 
 void blink();
 
@@ -27,7 +29,8 @@ int main() {
     rc_motor_init();
     rc_encoder_init();
     blink();
-    printf("\nTesting motor 1...\n");
+    sleep_ms(10000);
+    printf("\nleft motor backward\n");
     int32_t d = 0;
     int encoder_reading;
     float current_reading;
@@ -36,24 +39,80 @@ int main() {
     adc_select_input(0);
     for (; d < INT_16_MAX; d += INT_16_MAX/NUM_POINTS) {
         rc_motor_set(1, d);
-        encoder_reading = -rc_encoder_read_delta(1);
+        encoder_reading = rc_encoder_read_delta(1);
         wheel_speed = RPM_conversion_factor * encoder_reading;
         current_reading = 0.0;
         for(int i=0; i<10; i++){
             current_reading += I_conversion_factor * adc_read()/10;
         }
-        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, (float)WHEEL_RADIUS*2*3.14159*(float)wheel_speed/60,  (float)d);
+        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, wheel_speed, current_reading);
         sleep_ms(1000*TIMESTEP_S);
     }
+
     rc_motor_set(1, 0);
     d = 0;
     sleep_ms(3000);
+    printf("\nleft motor forward\n");
+    for (; d < INT_16_MAX; d += INT_16_MAX/NUM_POINTS) {
+        rc_motor_set(1, -d);
+        encoder_reading = rc_encoder_read_delta(1);
+        wheel_speed = RPM_conversion_factor * encoder_reading;
+        current_reading = 0.0;
+        for(int i=0; i<10; i++){
+            current_reading += I_conversion_factor * adc_read()/10;
+        }
+        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, wheel_speed, current_reading);
+        sleep_ms(1000*TIMESTEP_S);
+    }
+
+    rc_motor_set(1, 0);
+    d = 0;
+    sleep_ms(3000);
+
+
+
     adc_select_input(2);
-    printf("\nTesting motor 3...\n");
+    printf("\nright motor backward\n");
     printf("\nDuty\tSpeed\tCurrent\n");
     for (; d < INT_16_MAX; d += INT_16_MAX/NUM_POINTS) {
         rc_motor_set(3, d);
-        encoder_reading = -rc_encoder_read_delta(3);
+        encoder_reading = rc_encoder_read_delta(3);
+        wheel_speed = RPM_conversion_factor * encoder_reading;
+        current_reading = 0.0;
+        for(int i=0; i<10; i++){
+            current_reading += I_conversion_factor * adc_read()/10;
+        }
+        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, wheel_speed, current_reading);
+        sleep_ms(1000*TIMESTEP_S);
+    }
+
+
+    rc_motor_set(3, 0);
+    d = 0;
+    sleep_ms(3000);
+
+    printf("\nright motor forward\n");
+    for (; d < INT_16_MAX; d += INT_16_MAX/NUM_POINTS) {
+        rc_motor_set(3, -d);
+        encoder_reading = rc_encoder_read_delta(3);
+        wheel_speed = RPM_conversion_factor * encoder_reading;
+        current_reading = 0.0;
+        for(int i=0; i<10; i++){
+            current_reading += I_conversion_factor * adc_read()/10;
+        }
+        printf("%f\t%f\t%f\n", (float)d/(float)INT_16_MAX, wheel_speed, current_reading);
+        sleep_ms(1000*TIMESTEP_S);
+    }
+
+
+    rc_motor_set(3, 0);
+    d = 0;
+    sleep_ms(3000);
+
+    printf("\nright motor forward\n");
+    for (; d < INT_16_MAX; d += INT_16_MAX/NUM_POINTS) {
+        rc_motor_set(3, -d);
+        encoder_reading = rc_encoder_read_delta(3);
         wheel_speed = RPM_conversion_factor * encoder_reading;
         current_reading = 0.0;
         for(int i=0; i<10; i++){
@@ -65,6 +124,15 @@ int main() {
     
     blink();
     printf("\nDone!\n");
+
+    while(1)
+    {rc_motor_set(1, INT_16_MAX);
+    rc_motor_set(3, INT_16_MAX);
+    sleep_ms(1000*10);
+    rc_motor_set(1, 0);
+    rc_motor_set(3, 0);
+    sleep_ms(1000*10);}
+
     
     rc_motor_cleanup(); 
     blink();

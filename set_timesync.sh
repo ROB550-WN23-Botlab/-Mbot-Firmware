@@ -1,2 +1,2 @@
 cd ../botlab-w23/build/bin
-./timesync
+./timesync & ./pico_shim
