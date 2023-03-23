@@ -105,6 +105,44 @@ void read_pid_coefficients(i2c_inst_t *i2c)
     }
 }
 
+double linearSpeedToDuty(double speed,char motor)
+{
+    if(speed == 0)
+        {return 0;}
+
+    // left motor forward
+    else if(speed > 0 && motor == 'l')
+    {
+        double duty = 0.9 * speed + 0.111;
+        return duty<=1 ? duty: 1;
+    }
+
+    // left motor backward
+    else if(speed < 0 && motor == 'l')
+    {
+        double duty = 0.9 * speed + 0.111;
+        return duty>=-1 ? duty: -1;
+    }
+
+    // right motor forward
+    else if(speed > 0 && motor == 'r')
+    {
+        double duty = 0.869 * speed + 0.114;
+        return duty<=1 ? duty : 1;
+    }
+    // right motor backward
+    else if(speed < 0 && motor == 'r')
+    {
+        double duty = 0.869 * speed + 0.114;
+        return duty>=-1 ? duty: -1;
+    }
+
+    else
+    {
+        printf("error in speed to duty");
+    }
+}
+
 bool timer_cb(repeating_timer_t *rt)
 {
     // Read the PID values
@@ -179,11 +217,52 @@ bool timer_cb(repeating_timer_t *rt)
          *      - Use the equations provided in the document to compute the odometry components
          *      - Remember to clamp the orientation between [0, 2pi]!
          *************************************************************/
-        float delta_d, delta_theta; // displacement in meters and rotation in radians
+        float delta_theta; // displacement in meters and rotation in radians
+        double delta_x = 0;
+        double delta_y = 0;
+
+        double rightWheelDistance = current_encoders.right_delta * enc2meters;
+        double leftWheelDistance = current_encoders.left_delta * enc2meters;
+        
+        double previousTheta = current_odom.theta;
+        // double previousX = current_odom.x;
+        // double previousY = current_odom.y; 
+        
+        if(rightWheelDistance == leftWheelDistance)
+        {
+            delta_theta = 0;
+            delta_x = (rightWheelDistance) * cos(previousTheta);
+            delta_y = (rightWheelDistance) * sin(previousTheta);
+        }
+
+        else
+        {
+            double radiasOfTurn = (WHEEL_BASE/2)*((rightWheelDistance+leftWheelDistance)/
+                                                    (rightWheelDistance-leftWheelDistance));
+            delta_theta = (rightWheelDistance-leftWheelDistance)/(WHEEL_BASE);
+            delta_y = radiasOfTurn*(cos(previousTheta + delta_theta) - cos(previousTheta));
+            delta_x = radiasOfTurn*(sin(previousTheta + delta_theta) - sin(previousTheta));
+        }
+
+        current_odom.x=current_odom.x + delta_x;
+        current_odom.y=current_odom.y + delta_y;
+        current_odom.theta=current_odom.theta + delta_theta;
+        current_odom.utime = current_encoders.utime;
+
+        while(current_odom.theta >= 2*PI)
+        {
+            current_odom.theta = current_odom.theta - 2*PI;
+        }
+        while(current_odom.theta < 0)
+        {
+            current_odom.theta = current_odom.theta + 2*PI;
+        }
+
 
         /*************************************************************
          * End of TODO
          *************************************************************/
+
 
         // get the current motor command state (if we have one)
         if (comms_get_topic_data(MBOT_MOTOR_COMMAND, &current_cmd))
@@ -193,6 +272,7 @@ bool timer_cb(repeating_timer_t *rt)
             float measured_vel_l, measured_vel_r; // measured velocity in m/s
             float l_duty, r_duty;                 // duty cycle in range [-1, 1]
             float dt = MAIN_LOOP_PERIOD;          // time since last update in seconds
+            uint64_t previousTimeStamp = 0;
             if (OPEN_LOOP)
             {
                 /*************************************************************
@@ -202,6 +282,38 @@ bool timer_cb(repeating_timer_t *rt)
                  *      - Determine the setpoint velocities for left and right motor using the wheel velocity model
                  *      - To compute the measured velocities, use dt as the timestep (∆t)
                  ************************************************************/
+
+                
+                double angularV = current_cmd.angular_v;
+                double linearV = current_cmd.trans_v;
+                
+                left_sp = linearV - 0.5*angularV*WHEEL_BASE;
+                right_sp = linearV + 0.5*angularV*WHEEL_BASE;
+
+                
+                l_duty = linearSpeedToDuty(left_sp,'l');
+                r_duty = linearSpeedToDuty(right_sp,'r');
+
+                
+
+                // rc_motor_set(1, (int) l_duty);
+                // rc_motor_set(3, (int) r_duty);
+
+                if(current_cmd.utime != previousTimeStamp)
+                {
+                    printf("currentTime: %d \n",current_cmd.utime);
+                    printf("left wheel speed:%f, right wheel speed:%f \n",left_sp,right_sp);
+                    printf("lduty:%f, rduty:%f \n\n\n",l_duty,r_duty);
+                }
+                else
+                {
+                    printf("same command, status will not change\n");
+                }
+
+                previousTimeStamp = current_cmd.utime;
+
+
+
 
                 /*************************************************************
                  * End of TODO
@@ -232,6 +344,21 @@ bool timer_cb(repeating_timer_t *rt)
                  ************************************************************/
                 float fwd_sp, turn_sp;                     // forward and turn setpoints in m/s and rad/s
                 float measured_vel_fwd, measured_vel_turn; // measured forward and turn velocities in m/s and rad/s
+
+
+                double angularV = current_cmd.angular_v;
+                double linearV = current_cmd.trans_v;
+                
+                double ref_left_sp = linearV - 0.5*angularV*WHEEL_BASE;
+                double ref_right_sp = linearV + 0.5*angularV*WHEEL_BASE;
+
+                double t_left_vel = 
+
+                // 
+
+                
+                // l_duty = linearSpeedToDuty(left_sp,'l');
+                // r_duty = linearSpeedToDuty(right_sp,'r');
 
                 /**
                  *  Example closed loop controller
