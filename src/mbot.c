@@ -105,36 +105,38 @@ void read_pid_coefficients(i2c_inst_t *i2c)
     }
 }
 
-double linearSpeedToDuty_yuantao(double speed,char motor)
+double linearSpeedToDuty_041(double speed, char motor)
 {
-    if(speed == 0)
-        {return 0;}
+    if (speed == 0)
+    {
+        return 0;
+    }
 
     // left motor forward
-    else if(speed > 0 && motor == 'l')
+    else if (speed > 0 && motor == 'l')
     {
-        double duty = 0.8935848 * speed + 0.10415794;
-        return duty<=1 ? duty: 1;
+        double duty = 1.30443947 * speed + 0.10345549;
+        return duty <= 1 ? duty : 1;
     }
 
     // left motor backward
-    else if(speed < 0 && motor == 'l')
+    else if (speed < 0 && motor == 'l')
     {
-        double duty = 0.9203841 * speed - 0.10476584;
-        return duty>=-1 ? duty: -1;
+        double duty = 1.36147339 * speed - 0.09511042;
+        return duty >= -1 ? duty : -1;
     }
 
     // right motor forward
-    else if(speed > 0 && motor == 'r')
+    else if (speed > 0 && motor == 'r')
     {
-        double duty = 0.92308803 * speed + 0.11279647;
-        return duty<=1 ? duty : 1;
+        double duty = 1.38132838 * speed + 0.10033959;
+        return duty <= 1 ? duty : 1;
     }
 
-    else if(speed < 0 && motor == 'r')
+    else if (speed < 0 && motor == 'r')
     {
-        double duty = 0.92817986 * speed - 0.10170667;
-        return duty>=-1 ? duty: -1;
+        double duty = 1.35802471 * speed - 0.10298404;
+        return duty >= -1 ? duty : -1;
     }
 
     else
@@ -143,37 +145,38 @@ double linearSpeedToDuty_yuantao(double speed,char motor)
     }
 }
 
-
-double linearSpeedToDuty(double speed,char motor)
+double linearSpeedToDuty_111(double speed, char motor)
 {
-    if(speed == 0)
-        {return 0;}
+    if (speed == 0)
+    {
+        return 0;
+    }
 
     // left motor forward
-    else if(speed > 0 && motor == 'l')
+    else if (speed > 0 && motor == 'l')
     {
-        double duty = 1.38420797  * speed + 0.10521247;
-        return duty<=1 ? duty: 1;
+        double duty = 1.38420797 * speed + 0.10521247;
+        return duty <= 1 ? duty : 1;
     }
 
     // left motor backward
-    else if(speed < 0 && motor == 'l')
+    else if (speed < 0 && motor == 'l')
     {
-        double duty = 1.41440438  * speed - 0.09809853;
-        return duty>=-1 ? duty: -1;
+        double duty = 1.41440438 * speed - 0.09809853;
+        return duty >= -1 ? duty : -1;
     }
 
     // right motor forward
-    else if(speed > 0 && motor == 'r')
+    else if (speed > 0 && motor == 'r')
     {
-        double duty = 1.41891136  * speed + 0.13051303;
-        return duty<=1 ? duty : 1;
+        double duty = 1.41891136 * speed + 0.13051303;
+        return duty <= 1 ? duty : 1;
     }
 
-    else if(speed < 0 && motor == 'r')
+    else if (speed < 0 && motor == 'r')
     {
-        double duty = 1.38766877  * speed -0.13458451;
-        return duty>=-1 ? duty: -1;
+        double duty = 1.38766877 * speed - 0.13458451;
+        return duty >= -1 ? duty : -1;
     }
 
     else
@@ -181,7 +184,6 @@ double linearSpeedToDuty(double speed,char motor)
         printf("error in speed to duty");
     }
 }
-
 
 bool timer_cb(repeating_timer_t *rt)
 {
@@ -242,15 +244,13 @@ bool timer_cb(repeating_timer_t *rt)
         int enc_cnt_r = RIGHT_ENC_POL * rc_encoder_read_count(RIGHT_MOTOR_CHANNEL);
         int enc_delta_r = RIGHT_ENC_POL * rc_encoder_read_delta(RIGHT_MOTOR_CHANNEL);
 
-
         // copy current encoders data to previous data (these will be used in pid speed control)
         previous_encoders.utime = current_encoders.utime; // received_time.utime;
         previous_encoders.right_delta = current_encoders.right_delta;
         previous_encoders.rightticks = current_encoders.rightticks;
         previous_encoders.left_delta = current_encoders.left_delta;
         previous_encoders.leftticks = current_encoders.leftticks;
-        
-        
+
         current_encoders.utime = cur_pico_time; // received_time.utime;
         current_encoders.right_delta = enc_delta_r;
         current_encoders.rightticks = enc_cnt_r;
@@ -276,44 +276,40 @@ bool timer_cb(repeating_timer_t *rt)
          *************************************************************/
         double rightWheelDistance = current_encoders.right_delta * enc2meters;
         double leftWheelDistance = current_encoders.left_delta * enc2meters;
-        
+
         double previousTheta = current_odom.theta;
         // double previousX = current_odom.x;
-        // double previousY = current_odom.y; 
-        
-        if(rightWheelDistance == leftWheelDistance)
+        // double previousY = current_odom.y;
+
+        if (rightWheelDistance == leftWheelDistance)
         {
             delta_theta = 0;
-            delta_x = (rightWheelDistance) * cos(previousTheta);
-            delta_y = (rightWheelDistance) * sin(previousTheta);
+            delta_x = (rightWheelDistance)*cos(previousTheta);
+            delta_y = (rightWheelDistance)*sin(previousTheta);
         }
 
         else
         {
-            double radiasOfTurn = (WHEEL_BASE/2)*((rightWheelDistance+leftWheelDistance)/
-                                                    (rightWheelDistance-leftWheelDistance));
-            delta_theta = (rightWheelDistance-leftWheelDistance)/(WHEEL_BASE);
-            delta_y = radiasOfTurn*(-cos(previousTheta + delta_theta) + cos(previousTheta));
-            delta_x = radiasOfTurn*(sin(previousTheta + delta_theta) - sin(previousTheta));
+            double radiasOfTurn = (WHEEL_BASE / 2) * ((rightWheelDistance + leftWheelDistance) /
+                                                      (rightWheelDistance - leftWheelDistance));
+            delta_theta = (rightWheelDistance - leftWheelDistance) / (WHEEL_BASE);
+            delta_y = radiasOfTurn * (-cos(previousTheta + delta_theta) + cos(previousTheta));
+            delta_x = radiasOfTurn * (sin(previousTheta + delta_theta) - sin(previousTheta));
         }
 
-        current_odom.x=current_odom.x + delta_x;
-        current_odom.y=current_odom.y + delta_y;
-        current_odom.theta=current_odom.theta + delta_theta;
+        current_odom.x = current_odom.x + delta_x;
+        current_odom.y = current_odom.y + delta_y;
+        current_odom.theta = current_odom.theta + delta_theta;
         current_odom.utime = current_encoders.utime;
 
-        while(current_odom.theta >= 2*PI)
+        while (current_odom.theta >= 2 * PI)
         {
-            current_odom.theta = current_odom.theta - 2*PI;
+            current_odom.theta = current_odom.theta - 2 * PI;
         }
-        while(current_odom.theta < 0)
+        while (current_odom.theta < 0)
         {
-            current_odom.theta = current_odom.theta + 2*PI;
+            current_odom.theta = current_odom.theta + 2 * PI;
         }
-
-
-
-
 
         // get the current motor command state (if we have one)
         if (comms_get_topic_data(MBOT_MOTOR_COMMAND, &current_cmd))
@@ -334,23 +330,19 @@ bool timer_cb(repeating_timer_t *rt)
                  *      - To compute the measured velocities, use dt as the timestep (∆t)
                  ************************************************************/
 
-                
                 double angularV = current_cmd.angular_v;
                 double linearV = current_cmd.trans_v;
-                
-                left_sp = linearV - 0.5*angularV*WHEEL_BASE;
-                right_sp = linearV + 0.5*angularV*WHEEL_BASE;
 
-                
-                l_duty = linearSpeedToDuty(left_sp,'l');
-                r_duty = linearSpeedToDuty(right_sp,'r');
+                left_sp = linearV - 0.5 * angularV * WHEEL_BASE;
+                right_sp = linearV + 0.5 * angularV * WHEEL_BASE;
 
-                
+                l_duty = linearSpeedToDuty_041(left_sp, 'l');
+                r_duty = linearSpeedToDuty_041(right_sp, 'r');
 
                 // rc_motor_set(1, (int) l_duty);
                 // rc_motor_set(3, (int) r_duty);
 
-                if(current_cmd.utime != previousTimeStamp)
+                if (current_cmd.utime != previousTimeStamp)
                 {
                     // printf("currentTime: %d \n",current_cmd.utime);
                     // printf("left wheel speed:%f, right wheel speed:%f \n",left_sp,right_sp);
@@ -363,14 +355,8 @@ bool timer_cb(repeating_timer_t *rt)
 
                 previousTimeStamp = current_cmd.utime;
 
-
-
-
-
-
-
                 /*************************************************************
-                
+
                  * End of TODO
                  *************************************************************/
             }
@@ -399,37 +385,51 @@ bool timer_cb(repeating_timer_t *rt)
                  ************************************************************/
                 float fwd_sp, turn_sp;                     // forward and turn setpoints in m/s and rad/s
                 float measured_vel_fwd, measured_vel_turn; // measured forward and turn velocities in m/s and rad/s
-                
+
                 // following data are from encoder
 
                 double angularV = current_cmd.angular_v;
                 double linearV = current_cmd.trans_v;
-                
-                double lWheelTargetVelocity = linearV - 0.5*angularV*WHEEL_BASE;
-                double rWheelTargetVelocity = linearV + 0.5*angularV*WHEEL_BASE;
 
+                double lWheelTargetVelocity = linearV - 0.5 * angularV * WHEEL_BASE;
+                double rWheelTargetVelocity = linearV + 0.5 * angularV * WHEEL_BASE;
 
+                if (lWheelTargetVelocity == 0)
+                {
+                    l_duty = 0;
+                }
+                else
+                {
+                    // printf("angularV:%f,target left speed:%f,target right speed:%f\n",angularV,lWheelTargetVelocity,rWheelTargetVelocity);
 
-                printf("angularV:%f,target left speed:%f,target right speed:%f\n",angularV,lWheelTargetVelocity,rWheelTargetVelocity);
+                    double timeFromLast = (current_encoders.utime - previous_encoders.utime) / 1000000.0;
+                    double lWheelDistance = enc2meters * (current_encoders.left_delta);
+                    double lWheelRealVelocity = lWheelDistance / timeFromLast;
 
+                    // printf("%f\n",lWheelRealVelocity);
 
-                double timeFromLast = (current_encoders.utime - previous_encoders.utime)/1000000.0;
-                double lWheelDistance = enc2meters * (current_encoders.left_delta);
-                double rWheelDistance = enc2meters * (current_encoders.right_delta);
-                
-                double lWheelRealVelocity = lWheelDistance/timeFromLast;
-                double rWheelRealVelocity = rWheelDistance/timeFromLast;
+                    double lWheelVelocityError = lWheelTargetVelocity - lWheelRealVelocity;
+                    float lWheelPidDeltaVel = rc_filter_march(&left_wheel_pid_filter, lWheelVelocityError);
+                    l_duty = linearSpeedToDuty_041(lWheelPidDeltaVel, 'l');
 
-                // printf("%f\n",lWheelRealVelocity);
+                }
 
-                double lWheelVelocityError = lWheelTargetVelocity - lWheelRealVelocity;
-                double rWheelVelocityError = rWheelTargetVelocity - rWheelRealVelocity;
+                if (rWheelTargetVelocity == 0)
+                {
+                    r_duty = 0;
+                }
+                else
+                {
+                    // printf("angularV:%f,target left speed:%f,target right speed:%f\n",angularV,lWheelTargetVelocity,rWheelTargetVelocity);
 
-                float lWheelPidDeltaVel = rc_filter_march(&left_wheel_pid_filter, lWheelVelocityError);
-                float rWheelPidDeltaVel = rc_filter_march(&right_wheel_pid_filter, rWheelVelocityError);
-                
-                l_duty = linearSpeedToDuty(lWheelPidDeltaVel,'l');
-                r_duty = linearSpeedToDuty(rWheelPidDeltaVel,'r');
+                    double timeFromLast = (current_encoders.utime - previous_encoders.utime) / 1000000.0;
+                    double rWheelDistance = enc2meters * (current_encoders.right_delta);
+                    double rWheelRealVelocity = rWheelDistance / timeFromLast;
+                    // printf("%f\n",lWheelRealVelocity);
+                    double rWheelVelocityError = rWheelTargetVelocity - rWheelRealVelocity;
+                    float rWheelPidDeltaVel = rc_filter_march(&right_wheel_pid_filter, rWheelVelocityError);
+                    r_duty = linearSpeedToDuty_041(rWheelPidDeltaVel, 'r');
+                }
 
                 /**
                  *  Example closed loop controller
@@ -442,16 +442,14 @@ bool timer_cb(repeating_timer_t *rt)
                 /*************************************************************
                  * End of TODO
                  *************************************************************/
-                
             }
             // Clamp duty cycle to [-1, 1]
             l_duty = clamp_duty(l_duty);
             r_duty = clamp_duty(r_duty);
 
             // duty to motor command
-            l_cmd = LEFT_MOTOR_POL * (int)(l_duty * 0.95 * pow(2, 15));
-            r_cmd = RIGHT_MOTOR_POL * (int)(r_duty * 0.95 * pow(2, 15));
-
+            l_cmd = LEFT_MOTOR_POL * (int)(l_duty * 1.0 * pow(2, 15));
+            r_cmd = RIGHT_MOTOR_POL * (int)(r_duty * 1.0 * pow(2, 15));
 
             // set left and right motor command
             rc_motor_set(LEFT_MOTOR_CHANNEL, l_cmd);
@@ -473,10 +471,10 @@ bool timer_cb(repeating_timer_t *rt)
 int main()
 {
     bi_decl(bi_program_description("Firmware for the MBot Robot Control Board"));
-    
+
     set_sys_clock_khz(125000, true); // set master clock to 250MHz (if problematic try 125Mhz)
-    stdio_init_all(); // enable USB serial terminal
-    sleep_ms(1500); // quick sleep so we can catch the bootup process in terminal
+    stdio_init_all();                // enable USB serial terminal
+    sleep_ms(1500);                  // quick sleep so we can catch the bootup process in terminal
     printf("\nMBot Booting Up!\n");
 
     printf("initializinging motors...\n");
@@ -516,7 +514,7 @@ int main()
     mpu_config.read_mag_after_callback = 0;
     mpu_config.orient = ORIENTATION_Z_UP;
     mpu_config.dmp_sample_rate = 200;
-    
+
     // Calibrate the gyro to eliminate bias, Mbot must be still for this
     rc_mpu_calibrate_gyro_routine(mpu_config);
     sleep_ms(500);
@@ -563,18 +561,18 @@ int main()
 
     // Example of assigning PID parameters (using pid_parameters_t from mbot.h)
     rc_filter_pid(&left_wheel_pid_filter,
-                pid_params.kp,
-                pid_params.ki,
-                pid_params.kd,
-                1.0 / pid_params.dFilterHz,
-                1.0 / MAIN_LOOP_HZ);
-    
+                  pid_params.kp,
+                  pid_params.ki,
+                  pid_params.kd,
+                  1.0 / pid_params.dFilterHz,
+                  1.0 / MAIN_LOOP_HZ);
+
     rc_filter_pid(&right_wheel_pid_filter,
-                pid_params.kp,
-                pid_params.ki,
-                pid_params.kd,
-                1.0 / pid_params.dFilterHz,
-                1.0 / MAIN_LOOP_HZ);
+                  pid_params.kp,
+                  pid_params.ki,
+                  pid_params.kd,
+                  1.0 / pid_params.dFilterHz,
+                  1.0 / MAIN_LOOP_HZ);
 
     // Example of setting limits to the output of the filter
     // rc_filter_enable_saturation(&my_filter, min_val, max_val);
@@ -594,16 +592,16 @@ int main()
 
     while (running)
     {
-        double timeFromLast = (current_encoders.utime - previous_encoders.utime)/1000000.0;
+        double timeFromLast = (current_encoders.utime - previous_encoders.utime) / 1000000.0;
         double lWheelDistance = enc2meters * (current_encoders.left_delta);
         double rWheelDistance = enc2meters * (current_encoders.right_delta);
-                
-        double lWheelRealVelocity = lWheelDistance/timeFromLast;
-        double rWheelRealVelocity = rWheelDistance/timeFromLast;
 
-        // printf("\033[2A\r| lvelocity:\n\r %f",lWheelRealVelocity);
-        
-        // printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_Vel  |  R_Vel  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", lWheelRealVelocity, rWheelRealVelocity, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
+        double lWheelRealVelocity = lWheelDistance / timeFromLast;
+        double rWheelRealVelocity = rWheelDistance / timeFromLast;
+
+        printf("\033[2A\r| lvelocity:\n\r %f", lWheelRealVelocity);
+
+        printf("\033[2A\r|      SENSORS      |           ODOMETRY          |     SETPOINTS     |\n\r|  L_Vel  |  R_Vel  |    X    |    Y    |    θ    |   FWD   |   ANG   \n\r|%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |%7.3f  |", lWheelRealVelocity, rWheelRealVelocity, current_odom.x, current_odom.y, current_odom.theta, current_cmd.trans_v, current_cmd.angular_v);
     }
 }
 
